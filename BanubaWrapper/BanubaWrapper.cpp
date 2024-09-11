@@ -23,6 +23,8 @@
 #include <filesystem>
 #include <utility>
 
+#define DEBUG
+
 using namespace bnb::interfaces;
 
 // Function to convert pixel buffer format to string
@@ -136,7 +138,8 @@ void startRenderingBuffer() {
                     output_image[index + 3] = input_ptr[index + 3];     // A
                 }
             }
-#if DEBUG
+
+#if defined(DEBUG)
             // Generate a timestamp for the file name
             auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -242,7 +245,7 @@ void pushImageFromByteArray(const unsigned char* imageData, int stride, int widt
     ).count();
 
 
-#if DEBUG
+#if defined(DEBUG)
     // Create the filename with the timestamp
     std::stringstream ss;
     ss << "image_" << now_us << "_origin.jpg";
@@ -264,7 +267,7 @@ void pushImageFromByteArray(const unsigned char* imageData, int stride, int widt
       [](uint8_t* data) { /* deleting the image data */ }
     );
 
-#if DEBUG
+#if defined(DEBUG)
     saveImageToFile(image);
 #endif
 
