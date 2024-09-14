@@ -21,16 +21,23 @@ namespace
     render_backend_type render_backend = render_backend_type::opengl;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    #if defined(__APPLE__)
-    const auto result_path = (std::filesystem::temp_directory_path() / "bnb_result.jpg").string();
-    #else
-    const auto result_path = (std::filesystem::current_path() / "bnb_result.jpg").string();
-    #endif
-    
+    if (argc != 5) {
+        std::printf("Usage: <api_key> <effect> <input_file> <output_file>");
+        return 1;
+    }
+
+    int argIndex = 1;
+    std::string apiKey = argv[argIndex++];
+    std::string effectName = argv[argIndex++];
+    std::string inputFilePath = argv[argIndex++];
+    std::string outputFilePath = argv[argIndex++];
+
+    std::string resourcesDir = (std::filesystem::current_path() / "resources").string();
+
     // Initialize BanubaSDK with token and paths to resources
-    bnb::utility utility({bnb::sdk_resources_path(), BNB_RESOURCES_FOLDER}, BNB_CLIENT_TOKEN);
+    bnb::utility utility({ bnb::sdk_resources_path(), resourcesDir }, apiKey);
     // Create render delegate based on GLFW
     auto renderer = std::make_shared<GLFWRenderer>(render_backend);
     // Create render target
@@ -41,24 +48,24 @@ int main()
     auto input = bnb::player_api::photo_input::create();
     // Create frame output with callback t
     // that is called when frames are received and saves it to a file.
-    auto frame_output = bnb::player_api::opengl_frame_output::create([player, result_path](const bnb::full_image_t& pb) {
+    auto frame_output = bnb::player_api::opengl_frame_output::create([player, outputFilePath](const bnb::full_image_t& pb) {
         stbi_write_png(
-            (result_path + ".png").c_str(),
+            (outputFilePath).c_str(),
             pb.get_width(),
             pb.get_height(),
             pb.get_bytes_per_pixel(),
             pb.get_base_ptr(),
             pb.get_bytes_per_row()
         );
-        std::printf("Processing result was written to `%s`. \n", result_path.c_str());
-    }, bnb::pixel_buffer_format::bpc8_rgba);
+        std::printf("Processing result was written to `%s`. \n", outputFilePath.c_str());
+        }, bnb::pixel_buffer_format::bpc8_rgba);
     // Sync effect loading
-    player->load("effects/TrollGrandma");
+    player->load(effectName);
     player->use(input).use(frame_output);
     // Switch to manual render mode
     player->set_render_mode(bnb::player_api::player::render_mode::manual);
     // Load image into input
-    input->load((std::filesystem::path(BNB_RESOURCES_FOLDER) / "face720x1280.jpg").string());
+    input->load(inputFilePath);
     // Render once
     player->render();
 }
